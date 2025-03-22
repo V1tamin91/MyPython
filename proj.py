@@ -243,6 +243,9 @@ def okno():
     text1 = tk.Label(root, text=message,  wraplength=280, justify="left")
     text1.pack(fill="both", expand=True, padx=10, pady=10)
 
+    but_ok = tk.Button(root, text="ОК", command=root.destroy)
+    but_ok.pack(pady=20)
+
     # Запуск основного цикла
     root.mainloop()
 
@@ -302,16 +305,34 @@ def create_tray_icon():
     menu = pystray.Menu(pystray.MenuItem("Выбрать файл", choose_file), pystray.MenuItem("Сформировать отчет", okno), pystray.MenuItem("Выход", on_exit))
     icon = pystray.Icon("name", image, "Отчеты", menu)
     icon.run()
+# Загрузка настроек из файла
+def load_config():
+    try:
+        with open('config.json', 'r') as file:
+            config = json.load(file)
+            return config
+    except FileNotFoundError:
+        print("Файл настроек не найден. Создан новый файл с настройками по умолчанию.")
+        default_config = {"start_time": "08:00"}
+        with open('config.json', 'w') as file:
+            json.dump(default_config, file)
+        return default_config
+
+# Сохранение настроек в файл
+def save_config(config):
+    with open('config.json', 'w') as file:
+        json.dump(config, file)
+
+
+
+
+
 
 #Функция для запуска по времени
 def schedule_report():
     # Остальные задачи для формирования отчета
-    schedule.every().day.at("00:00").do(okno)
-    schedule.every().day.at("04:00").do(okno)
-    schedule.every().day.at("08:00").do(okno)
-    schedule.every().day.at("12:00").do(okno)
-    schedule.every().day.at("16:00").do(okno)
-    schedule.every().day.at("20:00").do(okno)
+    schedule.every().day.at(start_time).do(okno)
+    schedule.every(4).hours.do(okno)
     #schedule.every(5).seconds.do(okno)   #пробный запуск
 
     # Обновление данных и формирование отчета в 23:50
@@ -331,6 +352,8 @@ if __name__ == "__main__":
 
     # Получаем путь к файлу
     file_path = get_file_path()
+    config = load_config()
+    start_time = config["start_time"]
 
     if file_path:
         print(f"Используемый файл: {file_path}")
